@@ -16,6 +16,7 @@ const youtube = require('./src/youtube.js')
 let yt = new youtube('AIzaSyCuGHc2cSDYfkee9cn9iqY71nPaZ_NsSRc')
 let queue = []
 let currDl = false
+let vidDl = false
 let deleteFolderRecursive = function(path) {
     if( fs.existsSync(path) ) {
           fs.readdirSync(path).forEach(function(file,index){
@@ -37,6 +38,9 @@ setInterval(() => {
     if (!fs.existsSync(__dirname + '/videos')) fs.mkdirSync(__dirname + '/videos');
 }, 10000)
 let nextQueue = () => {
+    queue.splice(0, 1)
+    if(!queue[0]) return
+    while(queue.find((element, i) => element.socket.disconnected == true)) queue.splice(queue.findIndex((element, i) => element.socket.disconnected == true), 1)
     if(!queue[0]) return
     queue.forEach((l, i) => {
         if(i){ 
@@ -50,15 +54,39 @@ let nextQueue = () => {
         
     })
     let socket = queue[0].socket
+    let notif = queue[0].notif
+    notif.title = notif.title.replace(/Queing Video: /g, 'Getting your video: ')
+    notif.body = 'Your download should progress shortly'
+    notif.type = 'dwnld'
+    socket.emit('notifUpdate', notif)
     socket.emit('downloading')
     let vid = queue[0].vid
     let url = `https://youtube.com/search?v=${vid.id}`
+    currDl = true
+    vidDl = false
+    
+    setTimeout(() => {
+        if(socket.disconnected && queue[0].socket == socket){
+            fs.unlink(__dirname + '/videos/' + vid.title.replace(/[\W_]+/g," ") + '.mp4', () => {
+                currDl = false
+                console.log('unlinked')
+                nextQueue()
+            })
+        }
+    }, 20000)
     yt.downloadVideo(url, __dirname, vid)
         .then(() => {
             vid.title  = vid.title.replace(/[\W_]+/g," ");
             socket.emit('done', vid.title + '.mp4')
+            vidDl = true
+      
         })
-    
+        .catch(err => {
+            if(err == 'File too big') socket.emit('tooBig')
+
+            nextQueue()
+            vidDl = true
+        })
 }
 // we've started you off with Express, 
 // but feel free to use whatever libs or frameworks you'd like through `package.json`.
@@ -76,7 +104,7 @@ server.listen(process.env.PORT, function() {
 io.on('connection', socket => {
     socket.on('search', sent => {
         console.log(sent)
-        yt.search(sent.query, 1, sent.sortBy)
+        yt.search(sent.query, 50, sent.sortBy)
             .then(vids => {
                 let ret = vids.map((vid, i) => {
                     if(!vid){ console.log(vids.length, i);console.log(vids[i])}
@@ -116,23 +144,33 @@ io.on('connection', socket => {
                 body:'Your download should progress shortly',
                 type:'dwnld'
             })
+            vidDl = false
+            setTimeout(() => {
+                if(socket.disconnected && queue[0].socket == socket){
+                    fs.unlink(__dirname + '/videos/' + vid.title.replace(/[\W_]+/g," ") + '.mp4', () => {
+                        currDl = false
+                        console.log('unlinked')
+                        nextQueue()
+                    })
+                }
+            }, 20000)
             yt.downloadVideo(url, __dirname, vid)
                .then(() => {
                     vid.title  = vid.title.replace(/[\W_]+/g," ");
-                    vid._id = Math.random()
                     socket.emit('done', vid.title + '.mp4')
                     console.log(__dirname + '/videos/' + vid.title)
                     currDl = true
+                    vidDl = true
                     
                 })
                 .catch(err => {
                     if(err == 'File too big') socket.emit('tooBig')
-                    queue.splice(0, 1)
+                    
                     nextQueue()
+                    vidDl = true
                 })
         }
         else {
-            console.log(queue, queue.length, 'queing')
             socket.emit('queuing', {n: `${queue.length}/${queue.length}`})
             console.log('dab')
             let notif = {
@@ -147,14 +185,32 @@ io.on('connection', socket => {
                 vid: vid,
                 notif:notif
             })
+            queue.forEach((l, i) => {
+                if(i){ 
+                    console.log({
+                        id:l.notif.id,
+                        title:l.notif.title,
+                        body:`You are currently number ${i + 1}/${queue.length}`,
+                        type:'queue'
+                    })
+                    l.socket.emit('notifUpdate', {
+                        id:l.notif.id,
+                        title:l.notif.title,
+                        body:`You are currently number ${i + 1}/${queue.length}`,
+                        type:'queue'
+                    })
+                }
+
+            })
         }
     })
     socket.on('del', fileName => {
-        fs.unlink(__dirname + '/videos/' + fileName, () => {})
-        currDl = false
-        console.log('unlinked')
-        queue.splice(0, 1)
-        nextQueue()
+        fs.unlink(__dirname + '/videos/' + fileName, () => {
+            currDl = false
+            console.log('unlinked')
+            nextQueue()
+        })
+        
     })
     socket.on('log', console.log)
     

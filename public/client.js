@@ -13,6 +13,7 @@ class Timeout {
 }
 var socket = io()
 let downloadNotif
+let notifs = new Map()
 console.log = arg => {socket.emit('log', arg)}
 function setCookie(cname, cvalue, exdays) {
     var d = new Date();
@@ -51,6 +52,7 @@ class Notification {
         this.element.appendChild(this.titleElement)
         this.element.appendChild(this.bodyElement)
         this.element.classList.add('notif')
+        notifs.set(this.id, this)
     }
     appendTo(element){
         element.appendChild(this.element)
@@ -115,7 +117,20 @@ socket.on('done', fileName => {
     downloadNotif.titleElement.innerHTML = downloadNotif.titleElement.innerHTML.replace(/Getting your video: /, 'Now downloading ')
     downloadNotif.bodyElement.innerHTML = 'Currently downloading your video!'
     download(fileName, window.location + 'videos/' + fileName)
-    setTimeout(() => socket.emit('del', fileName), 10000)
+    setTimeout(() => {
+        socket.emit('del', fileName)
+        downloadNotif.titleElement.innerHTML = downloadNotif.titleElement.innerHTML.replace(/Now downloading /, 'Finished Downloading ')
+        let id = downloadNotif.id + 1 - 1
+        notifs.get(id).element.style.opacity = 1.0
+        let opacInterval = setInterval(() => {
+            notifs.get(id).element.style.opacity -= 0.01
+        }, 1000/100)
+        setTimeout(() => {
+            clearInterval(opacInterval)
+            notifs.get(id).element.parentElement.removeChild(notifs.get(id).element)
+            notifs.delete(id)
+        }, 1000)
+    }, 10000)
     document.getElementById('downloading').style.display = 'none'
 })
 socket.on('err', document.write)
@@ -126,12 +141,21 @@ socket.on('queuing', l => {
     document.getElementById('tooBig').style.display = 'none'
 })
 socket.on('notif', notif => {
-    //console.log(notif)
     let n = new Notification(notif)
     if(n._type == 'dwnld') downloadNotif = n
-    console.log(n._type)
-    console.log('ntype')
     n.appendTo(document.getElementById('notifications'))
+})
+socket.on('notifUpdate', up => {
+    console.log('pls help me')
+    console.log(up.body)
+    console.log(up.id)
+    let notif = notifs.get(up.id)
+    
+    notif._type = up.type
+    notif.titleElement.innerHTML = up.title
+    notif.bodyElement.innerHTML = up.body
+    if(notif._type == 'dwnld') downloadNotif = notif
+    console.log(up.body)
 })
 socket.on('downloading', () => {
     document.getElementById('downloading').style.display = 'block'
