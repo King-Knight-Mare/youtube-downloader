@@ -1,0 +1,79 @@
+<!-- This is a static file -->
+<!-- served from your routes in server.js -->
+
+<!-- You might want to try something fancier: -->
+<!-- html/nunjucks docs: https://mozilla.github.io/nunjucks/ -->
+<!-- pug: https://pugjs.org/ -->
+<!-- haml: http://haml.info/ -->
+<!-- hbs(handlebars): http://handlebarsjs.com/ -->
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Youtube Downloader</title>
+    <meta name="description" content="A cool thing made with Glitch">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link id="favicon" rel="icon" href="https://glitch.com/edit/favicon-app.ico" type="image/x-icon">
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- import the webpage's stylesheet -->
+    <link rel="stylesheet" href="/style.css">
+    <script src="/socket.io/socket.io.js"></script>
+    
+    <!-- import the webpage's client-side javascript file -->
+  </head>
+  <body>
+      <form id='searchForm'>
+          <div id="searchContainer">
+              <h1>
+                  Youtube
+              </h1>
+              <input placeholder='Search' id='search'>
+              <button id='searchButton' type="submit"><i class="fa fa-search"></i></button>
+                  <span id="sortLabel">Sort By:</span>
+                  <select id='sortBy'>
+                      <option value="date">Upload Date</option>
+                      <option value="relevance" selected>Relevance</option>
+                      <option value="title">Name</option>
+                      <option value="viewCount">View Count</option>
+                  </select>
+          </div>
+          <div id="res">
+              <h1> Search results: </h1>
+              <div id="results">
+              </div>
+          </div>
+      </form>
+      <div class="modal" id="queuing" style='display:none'>
+          <div class='modal-content'>
+                
+               You are being queued
+                You are <span id='qnum'></span> in the queue
+          </div>
+      </div>
+      <div class="modal" id="queuing" style='display:none'>
+          <div class='modal-content'> 
+               You are being queued
+               You are <span id='qnum'></span> in the queue
+          </div>
+      </div>
+      <div class="modal" id="downloading" style='display:none'>
+          <div class='modal-content'>
+               Now downloading!
+          </div>
+      </div>
+      <div class="modal" id="tooBig" style='display:none'>
+          <div class='modal-content'>
+               This file is too big!
+          </div>
+      </div>
+    <!-- include the Glitch button to show what the webpage is about and
+          to make it easier for folks to view source and remix -->
+    <div class="glitchButton" style="position:fixed;top:20px;right:20px;"></div>
+    <script src="https://button.glitch.me/button.js"></script>
+    <script src="/client.js"></script>
+
+  </body>
+</html>

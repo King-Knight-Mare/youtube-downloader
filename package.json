@@ -1,0 +1,21 @@
+{
+  "name": "youtube-v3-download-api",
+  "version": "0.0.1-alpha",
+  "description": "A simple api that downloads and searches for videos",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.16.4",
+    "request": "^2.88.0",
+    "request-promise": "^4.2.2",
+    "youtube-dl": "^1.12.2",
+    "socket.io": "^2.2.0",
+    "ytdl-core": "^0.28.3",
+    "mongolab-data-api-promise": "0.0.1-alpha"
+  },
+  "engines": {
+    "node": "8.x"
+  }
+}
