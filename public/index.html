@@ -32,18 +32,30 @@
               </h1>
               <input placeholder='Search' id='search'>
               <button id='searchButton' type="submit"><i class="fa fa-search"></i></button>
-                  <span id="sortLabel">Sort By:</span>
-                  <select id='sortBy'>
-                      <option value="date">Upload Date</option>
-                      <option value="relevance" selected>Relevance</option>
-                      <option value="title">Name</option>
-                      <option value="viewCount">View Count</option>
-                  </select>
+              <span id="sortLabel">Sort By:</span>
+              <select id='sortBy'>
+                  <option value="date">Upload Date</option>
+                  <option value="relevance" selected>Relevance</option>
+                  <option value="title">Name</option>
+                  <option value="viewCount">View Count</option>
+              </select>
           </div>
-          <div id="res">
-              <h1> Search results: </h1>
-              <div id="results">
+          <div id="bottom">
+              <div id="res">
+                <h1> Search results: </h1>
+                <div id="results">
+                </div>
+            </div>
+            <div id="notifications">
+                <div class="notif">
+                  <h4 class="notifTitle">
+                    Outrunning Karma!
+                  </h4>
+                  <p class="notifBody">
+                    Downloading now!
+                  </p>
               </div>
+            </div>
           </div>
       </form>
       <div class="modal" id="queuing" style='display:none'>

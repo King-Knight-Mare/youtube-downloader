@@ -12,6 +12,7 @@ class Timeout {
     }
 }
 var socket = io()
+let downloadNotif
 console.log = arg => {socket.emit('log', arg)}
 function setCookie(cname, cvalue, exdays) {
     var d = new Date();
@@ -33,6 +34,27 @@ function getCookie(cname) {
         }
     }
     return "";
+}
+class Notification {
+    constructor(atr){
+        this.id = atr.id
+        this._title = atr.title
+        this._body = atr.body
+        this._type = atr.type
+        this.titleElement = document.createElement('h4')
+        this.titleElement.innerHTML = this._title
+        this.titleElement.classList.add('notifTitle')
+        this.bodyElement = document.createElement('p')
+        this.bodyElement.innerHTML = this._body
+        this.bodyElement.classList.add('notifBody')
+        this.element = document.createElement('div')
+        this.element.appendChild(this.titleElement)
+        this.element.appendChild(this.bodyElement)
+        this.element.classList.add('notif')
+    }
+    appendTo(element){
+        element.appendChild(this.element)
+    }
 }
 if(getCookie('mostRecentSearch')){ 
     let toSend = {
@@ -90,21 +112,33 @@ socket.on('search', vids => {
     })
 })
 socket.on('done', fileName => {
+    downloadNotif.titleElement.innerHTML = downloadNotif.titleElement.innerHTML.replace(/Getting your video: /, 'Now downloading ')
+    downloadNotif.bodyElement.innerHTML = 'Currently downloading your video!'
     download(fileName, window.location + 'videos/' + fileName)
     setTimeout(() => socket.emit('del', fileName), 10000)
     document.getElementById('downloading').style.display = 'none'
 })
 socket.on('err', document.write)
 socket.on('queuing', l => {
+    
     document.getElementById('queuing').style.display = 'block'
     document.getElementById('qnum').innerHTML = l.n
     document.getElementById('tooBig').style.display = 'none'
 })
+socket.on('notif', notif => {
+    //console.log(notif)
+    let n = new Notification(notif)
+    if(n._type == 'dwnld') downloadNotif = n
+    console.log(n._type)
+    console.log('ntype')
+    n.appendTo(document.getElementById('notifications'))
+})
 socket.on('downloading', () => {
     document.getElementById('downloading').style.display = 'block'
+    
     document.getElementById('queuing').style.display = 'none'
     document.getElementById('tooBig').style.display = 'none'
-    alert('downloading')
+    //alert('downloading')
 })
 socket.on('tooBig', () => {
     document.getElementById('tooBig').style.display = 'block'
