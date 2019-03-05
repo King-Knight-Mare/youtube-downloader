@@ -21,7 +21,6 @@ class Video  {
             this.thumbnails = details.snippet.thumbnails
             this.channel = details.snippet.channelTitle
             this.url = `https://youtube.com/watch?v=${this.id}`
-            
         }
     }
     

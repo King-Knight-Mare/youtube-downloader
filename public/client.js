@@ -12,6 +12,8 @@ class Timeout {
     }
 }
 var socket = io()
+let downloadNotif
+let notifs = new Map()
 console.log = arg => {socket.emit('log', arg)}
 function setCookie(cname, cvalue, exdays) {
     var d = new Date();
@@ -33,6 +35,28 @@ function getCookie(cname) {
         }
     }
     return "";
+}
+class Notification {
+    constructor(atr){
+        this.id = atr.id
+        this._title = atr.title
+        this._body = atr.body
+        this._type = atr.type
+        this.titleElement = document.createElement('h4')
+        this.titleElement.innerHTML = this._title
+        this.titleElement.classList.add('notifTitle')
+        this.bodyElement = document.createElement('p')
+        this.bodyElement.innerHTML = this._body
+        this.bodyElement.classList.add('notifBody')
+        this.element = document.createElement('div')
+        this.element.appendChild(this.titleElement)
+        this.element.appendChild(this.bodyElement)
+        this.element.classList.add('notif')
+        notifs.set(this.id, this)
+    }
+    appendTo(element){
+        element.appendChild(this.element)
+    }
 }
 if(getCookie('mostRecentSearch')){ 
     let toSend = {
@@ -90,21 +114,55 @@ socket.on('search', vids => {
     })
 })
 socket.on('done', fileName => {
+    downloadNotif.titleElement.innerHTML = downloadNotif.titleElement.innerHTML.replace(/Getting your video: /, 'Now downloading ')
+    downloadNotif.bodyElement.innerHTML = 'Currently downloading your video!'
     download(fileName, window.location + 'videos/' + fileName)
-    setTimeout(() => socket.emit('del', fileName), 10000)
+    setTimeout(() => {
+        socket.emit('del', fileName)
+        downloadNotif.titleElement.innerHTML = downloadNotif.titleElement.innerHTML.replace(/Now downloading /, 'Finished Downloading ')
+        let id = downloadNotif.id + 1 - 1
+        notifs.get(id).element.style.opacity = 1.0
+        let opacInterval = setInterval(() => {
+            notifs.get(id).element.style.opacity -= 0.01
+        }, 1000/100)
+        setTimeout(() => {
+            clearInterval(opacInterval)
+            notifs.get(id).element.parentElement.removeChild(notifs.get(id).element)
+            notifs.delete(id)
+        }, 1000)
+    }, 10000)
     document.getElementById('downloading').style.display = 'none'
 })
 socket.on('err', document.write)
 socket.on('queuing', l => {
+    
     document.getElementById('queuing').style.display = 'block'
     document.getElementById('qnum').innerHTML = l.n
     document.getElementById('tooBig').style.display = 'none'
 })
+socket.on('notif', notif => {
+    let n = new Notification(notif)
+    if(n._type == 'dwnld') downloadNotif = n
+    n.appendTo(document.getElementById('notifications'))
+})
+socket.on('notifUpdate', up => {
+    console.log('pls help me')
+    console.log(up.body)
+    console.log(up.id)
+    let notif = notifs.get(up.id)
+    
+    notif._type = up.type
+    notif.titleElement.innerHTML = up.title
+    notif.bodyElement.innerHTML = up.body
+    if(notif._type == 'dwnld') downloadNotif = notif
+    console.log(up.body)
+})
 socket.on('downloading', () => {
     document.getElementById('downloading').style.display = 'block'
+    
     document.getElementById('queuing').style.display = 'none'
     document.getElementById('tooBig').style.display = 'none'
-    alert('downloading')
+    //alert('downloading')
 })
 socket.on('tooBig', () => {
     document.getElementById('tooBig').style.display = 'block'
