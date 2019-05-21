@@ -19,16 +19,16 @@ let currDl = false
 let vidDl = false
 let deleteFolderRecursive = function(path) {
     if( fs.existsSync(path) ) {
-            fs.readdirSync(path).forEach(function(file,index){
-            var curPath = path + "/" + file;
+          fs.readdirSync(path).forEach(function(file,index){
+          var curPath = path + "/" + file;
 
-            if(fs.lstatSync(curPath).isDirectory()) { // recurse
-                deleteFolderRecursive(curPath);
-            } else { // delete file
-                fs.unlinkSync(curPath);
-            }
-        });
-        fs.rmdirSync(path);
+          if(fs.lstatSync(curPath).isDirectory()) { // recurse
+              deleteFolderRecursive(curPath);
+          } else { // delete file
+              fs.unlinkSync(curPath);
+          }
+      });
+      fs.rmdirSync(path);
     }
 };
 setInterval(() => {
@@ -138,16 +138,14 @@ io.on('connection', socket => {
             let url = `https://youtube.com/search?v=${vid.id}`
             queue.push({socket:socket, vid: vid})
             socket.emit('downloading')
-            let notifId = Math.random()
             socket.emit('notif', {
-                id:notifId,
+                id:Math.random(),
                 title:`Getting your video: ${vid.title} !`,
                 body:'Your download should progress shortly',
                 type:'dwnld'
             })
             vidDl = false
             setTimeout(() => {
-                if(!queue[0]) return
                 if(socket.disconnected && queue[0].socket == socket){
                     fs.unlink(__dirname + '/videos/' + vid.title.replace(/[\W_]+/g," ") + '.mp4', () => {
                         currDl = false
@@ -166,15 +164,7 @@ io.on('connection', socket => {
                     
                 })
                 .catch(err => {
-                    if(err == 'File too big'){ 
-                        socket.emit('notif', {
-                            id:Math.random(),
-                            title:`Sorry this file is too big: ${vid.title}!`,
-                            body:`Please try a smaller file`,
-                            type:'tooBig',
-                            remove:[notifId]
-                        })
-                    }
+                    if(err == 'File too big') socket.emit('tooBig')
                     
                     nextQueue()
                     vidDl = true

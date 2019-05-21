@@ -69,7 +69,6 @@ if(getCookie('mostRecentSearch')){
 socket.on('search', vids => {
     let res = document.getElementById('results')
     res.innerHTML = ''
-    res.scrollTop = 0
     if(!vids.length) return res.innerHTML = '<h2><b>No Results</b></h2>'
     console.log(vids.length)
     vids.forEach(vid => {
@@ -144,25 +143,7 @@ socket.on('queuing', l => {
 socket.on('notif', notif => {
     let n = new Notification(notif)
     if(n._type == 'dwnld') downloadNotif = n
-    if(n._type == 'tooBig'){
-        
-    }
     n.appendTo(document.getElementById('notifications'))
-    if(notif.remove){
-        notif.remove.forEach(id => {
-            notifs.get(id).element.parentElement.removeChild(notifs.get(id).element)
-            notifs.delete(id)
-            n.element.style.opacity = 1.0
-            let opacInterval = setInterval(() => {
-                n.element.style.opacity -= 0.01
-            }, 5000/100)
-            setTimeout(() => {
-                clearInterval(opacInterval)
-                n.element.parentElement.removeChild(n.element)
-                notifs.delete(id)
-            }, 5000)
-        })
-    }
 })
 socket.on('notifUpdate', up => {
     console.log('pls help me')
